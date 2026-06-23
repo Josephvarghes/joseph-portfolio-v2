@@ -29,6 +29,9 @@ import { Textarea } from "./components/ui/textarea";
 import { Card } from "./components/ui/card";
 import { toast, Toaster } from "sonner";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
+import EngineeringEcosystem from "./components/EngineeringEcosystem";
+import Magnetic from "./components/ui/Magnetic";
+import Preloader from "./components/ui/Preloader";
 import profileBlueCoat from "@/imports/blue_coat-dp.jpg";
 import profileWhiteJacket from "@/imports/IMG-20240501-WA0086.jpg";
 import profileCasual1 from "@/imports/IMG-20240420-WA0104__2_.jpg";
@@ -136,7 +139,117 @@ const EXPERIENCE = [
 
 const galleryPhotos = [profileBlueCoat, profileWhiteJacket, profileCasual1, profileCasual2];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    }
+  }
+};
+
+const childVariants = {
+  hidden: { y: 40, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+    }
+  }
+};
+
+const scrollRevealVariants = {
+  hidden: { y: 40, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 80,
+      damping: 15,
+      duration: 0.8
+    }
+  }
+};
+
+const scrollContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12
+    }
+  }
+};
+
+const skillCardVariants = {
+  hidden: (i: number) => ({
+    opacity: 0,
+    y: 50,
+    rotate: i % 2 === 0 ? -6 : 6,
+  }),
+  visible: {
+    opacity: 1,
+    y: 0,
+    rotate: 0,
+    transition: {
+      type: "spring",
+      stiffness: 90,
+      damping: 12,
+    }
+  }
+};
+
+const projectCardVariants = {
+  hidden: (i: number) => ({
+    opacity: 0,
+    x: i === 0 ? -80 : i === 2 ? 80 : 0,
+    y: i === 1 ? 80 : 0,
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 80,
+      damping: 15,
+    }
+  }
+};
+
+const timelineNodeVariants = {
+  hidden: { scale: 0, rotate: -180 },
+  visible: {
+    scale: 1,
+    rotate: 0,
+    transition: {
+      type: "spring",
+      stiffness: 120,
+      damping: 12,
+    }
+  }
+};
+
+const timelineCardVariants = {
+  hidden: { x: 50, opacity: 0 },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 80,
+      damping: 15,
+    }
+  }
+};
+
 export default function App() {
+  const [loading, setLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     {
@@ -150,9 +263,30 @@ export default function App() {
   const [activePhoto, setActivePhoto] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll();
-  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -40]);
+  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.93]);
+
+  const { scrollYProgress: timelineProgress } = useScroll({
+    target: timelineRef,
+    offset: ["start end", "center center"]
+  });
+  const timelineScaleY = useTransform(timelineProgress, [0, 1], [0, 1]);
+
+  // Lock scroll when preloader is loading
+  useEffect(() => {
+    if (loading) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [loading]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -163,7 +297,7 @@ export default function App() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ["home", "about", "skills", "projects", "experience", "contact"];
+      const sections = ["home", "about", "skills", "projects", "ecosystem", "experience", "contact"];
       const scrollPosition = window.scrollY + 200;
       for (const section of sections) {
         const element = document.getElementById(section);
@@ -198,6 +332,8 @@ export default function App() {
       return "Joseph has worked at RestoPulse (Software Engineer), Wonder Creative Studio (Backend & AI Developer), Labmentix (AI/ML Intern), and Revature (AI/ML Trainee). Check the Experience section for full details!";
     } else if (input.includes("project")) {
       return "Joseph's key projects include Resto Pulse (AI restaurant management on GCP), Edu Stack LMS (Node.js backend), and an AI Medical Chatbot using LangChain and Pinecone. Scroll to Projects to see more!";
+    } else if (input.includes("ecosystem") || input.includes("architecture") || input.includes("case study") || input.includes("scaling")) {
+      return "Joseph's Engineering Ecosystem highlights core system architectures: a FastAPI Gateway (12ms latency), a semantic RAG Pipeline with Pinecone, a Redis alerts broker, and self-healing GCP clusters. Scroll to the Ecosystem section to check it out!";
     } else if (input.includes("contact") || input.includes("hire") || input.includes("email")) {
       return "You can reach Joseph at josephvarghese98128@gmail.com or call/WhatsApp +91 9656082409. LinkedIn: linkedin.com/in/joseph-varghese-ai";
     } else if (input.includes("education") || input.includes("college") || input.includes("degree")) {
@@ -221,11 +357,21 @@ export default function App() {
     <div ref={containerRef} className="min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-foreground selection:text-background font-sans">
       <Toaster position="top-right" />
 
-      {/* ─── MAIN RESPONSIVE CONTAINER ─── */}
-      <div className="flex flex-col lg:flex-row min-h-screen w-full relative">
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <Preloader key="preloader" onComplete={() => setLoading(false)} />
+        ) : (
+          <>
+            <motion.div
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col lg:flex-row min-h-screen w-full relative"
+            >
 
-        {/* ─── LEFT SIDEBAR (Desktop navigation, sticky) ─── */}
-        <aside className="hidden lg:flex fixed top-0 left-0 w-[22%] h-screen flex-col justify-between p-10 border-r-2 border-border bg-background z-40">
+            {/* ─── LEFT SIDEBAR (Desktop navigation, sticky) ─── */}
+            <aside className="hidden lg:flex fixed top-0 left-0 w-[22%] h-screen flex-col justify-between p-10 border-r-2 border-border bg-background z-40">
           {/* Top: Logo */}
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => scrollToSection("home")}>
             <svg width="38" height="38" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground shrink-0 group-hover:scale-105 transition-transform duration-300">
@@ -241,7 +387,7 @@ export default function App() {
 
           {/* Middle: Menu links */}
           <nav className="flex flex-col gap-4 my-8">
-            {["home", "about", "skills", "projects", "experience", "contact"].map((item) => (
+            {["home", "about", "skills", "projects", "ecosystem", "experience", "contact"].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollToSection(item)}
@@ -305,7 +451,7 @@ export default function App() {
           {/* Collapsible Mobile Menu */}
           {mobileMenuOpen && (
             <div className="absolute top-[100%] left-0 right-0 bg-background border-b-2 border-border flex flex-col p-6 gap-3 z-50 shadow-xl">
-              {["home", "about", "skills", "projects", "experience", "contact"].map((item) => (
+              {["home", "about", "skills", "projects", "ecosystem", "experience", "contact"].map((item) => (
                 <button
                   key={item}
                   onClick={() => {
@@ -320,15 +466,17 @@ export default function App() {
                   {activeSection === item && <span className="w-2 h-2 rounded-full bg-foreground" />}
                 </button>
               ))}
-              <button
-                onClick={() => {
-                  scrollToSection("contact");
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full bg-primary text-primary-foreground border-2 border-border font-black rounded-xl py-3 text-center text-xs uppercase shadow-brutalist mt-2 hover-brutalist active-brutalist cursor-pointer"
-              >
-                Hire Joseph
-              </button>
+              <Magnetic>
+                <button
+                  onClick={() => {
+                    scrollToSection("contact");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full bg-primary text-primary-foreground border-2 border-border font-black rounded-xl py-3 text-center text-xs uppercase shadow-brutalist mt-2 hover-brutalist active-brutalist cursor-pointer"
+                >
+                  Hire Joseph
+                </button>
+              </Magnetic>
             </div>
           )}
         </header>
@@ -338,14 +486,23 @@ export default function App() {
           
           {/* ─── HERO SECTION ─── */}
           <section id="home" className="min-h-[80vh] flex flex-col justify-center pt-8 lg:pt-14 relative">
-            <motion.div style={{ y: heroY }} className="space-y-6">
-              <h1 className="text-4xl sm:text-5xl md:text-[64px] font-black leading-[1.05] tracking-tighter uppercase text-foreground">
+            <motion.div 
+              style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-6"
+            >
+              <motion.h1 
+                variants={childVariants}
+                className="text-4xl sm:text-5xl md:text-[64px] font-black leading-[1.05] tracking-tighter uppercase text-foreground"
+              >
                 Joseph Varghese is <br />
-                building AI & Web <br />
-                systems. <span className="bg-foreground text-background px-3.5 py-1 rounded-xl inline-block mt-2 font-black border-2 border-foreground select-none">Is this fine?</span>
-              </h1>
+                architecting intelligent <br />
+                AI & Web systems. <span className="bg-foreground text-background px-3.5 py-1 rounded-xl inline-block mt-2 font-black border-2 border-foreground select-none text-xs sm:text-sm tracking-wider">production-ready</span>
+              </motion.h1>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <motion.div variants={childVariants} className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-black uppercase tracking-wider text-foreground/60 bg-white/40 border border-border px-3 py-1 rounded-md">
                   June 2026
                 </span>
@@ -353,10 +510,10 @@ export default function App() {
                   <span className="w-2 h-2 rounded-full bg-green-500 inline-block animate-pulse" />
                   Available for Hire
                 </span>
-              </div>
+              </motion.div>
 
               {/* Centered illustration mascot */}
-              <div className="py-6 flex justify-center items-center">
+              <motion.div variants={childVariants} className="py-6 flex justify-center items-center">
                 <div className="relative w-72 h-72 sm:w-80 sm:h-80 bg-white border-2 border-border shadow-brutalist rounded-2xl overflow-hidden group">
                   <img
                     src={developerMascot}
@@ -364,22 +521,26 @@ export default function App() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="flex flex-wrap gap-4 pt-4 justify-center lg:justify-start">
-                <button
-                  onClick={() => scrollToSection("projects")}
-                  className="bg-primary text-primary-foreground border-2 border-border font-black text-xs uppercase py-3.5 px-6 rounded-xl hover-brutalist active-brutalist shadow-brutalist flex items-center gap-2 cursor-pointer"
-                >
-                  View My Work <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => scrollToSection("contact")}
-                  className="bg-white text-foreground border-2 border-border font-black text-xs uppercase py-3.5 px-6 rounded-xl hover-brutalist active-brutalist shadow-brutalist cursor-pointer"
-                >
-                  Get In Touch
-                </button>
-              </div>
+              <motion.div variants={childVariants} className="flex flex-wrap gap-4 pt-4 justify-center lg:justify-start">
+                <Magnetic>
+                  <button
+                    onClick={() => scrollToSection("projects")}
+                    className="bg-primary text-primary-foreground border-2 border-border font-black text-xs uppercase py-3.5 px-6 rounded-xl hover-brutalist active-brutalist shadow-brutalist flex items-center gap-2 cursor-pointer"
+                  >
+                    View My Work <ArrowRight className="w-4 h-4" />
+                  </button>
+                </Magnetic>
+                <Magnetic>
+                  <button
+                    onClick={() => scrollToSection("contact")}
+                    className="bg-white text-foreground border-2 border-border font-black text-xs uppercase py-3.5 px-6 rounded-xl hover-brutalist active-brutalist shadow-brutalist cursor-pointer"
+                  >
+                    Get In Touch
+                  </button>
+                </Magnetic>
+              </motion.div>
             </motion.div>
 
             <button
@@ -392,13 +553,25 @@ export default function App() {
 
           {/* ─── ABOUT SECTION ─── */}
           <section id="about" className="scroll-mt-20">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3">
+            <motion.h2 
+              initial={{ x: -40, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ type: "spring", stiffness: 80, damping: 15 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3"
+            >
               <Sparkles className="w-8 h-8 text-primary" /> About Me
-            </h2>
+            </motion.h2>
 
             <div className="grid md:grid-cols-2 gap-10 lg:gap-14 items-center">
               {/* Photo Frame (Brutalist Slideshow) */}
-              <div className="relative w-full max-w-[340px] mx-auto">
+              <motion.div 
+                variants={scrollRevealVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                className="relative w-full max-w-[340px] mx-auto"
+              >
                 <div className="relative rounded-2xl overflow-hidden aspect-[4/5] border-2 border-border shadow-brutalist-lg bg-white">
                   {galleryPhotos.map((photo, i) => (
                     <motion.div
@@ -419,30 +592,48 @@ export default function App() {
                 </div>
 
                 {/* Floating brutalist detail badges */}
-                <div className="absolute -right-4 top-8 bg-card border-2 border-border rounded-xl px-4 py-2 shadow-brutalist-sm hover-brutalist">
+                <motion.div 
+                  initial={{ scale: 0, rotate: -10 }}
+                  whileInView={{ scale: 1, rotate: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.3 }}
+                  className="absolute -right-4 top-8 bg-card border-2 border-border rounded-xl px-4 py-2 shadow-brutalist-sm hover-brutalist"
+                >
                   <p className="text-xl font-black text-primary leading-none">4+</p>
                   <p className="text-[10px] uppercase font-bold text-foreground/60">Experiences</p>
-                </div>
-                <div className="absolute -left-4 bottom-12 bg-card border-2 border-border rounded-xl px-4 py-2 shadow-brutalist-sm hover-brutalist">
+                </motion.div>
+                <motion.div 
+                  initial={{ scale: 0, rotate: 10 }}
+                  whileInView={{ scale: 1, rotate: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.45 }}
+                  className="absolute -left-4 bottom-12 bg-card border-2 border-border rounded-xl px-4 py-2 shadow-brutalist-sm hover-brutalist"
+                >
                   <p className="text-xl font-black text-primary leading-none">AI-102</p>
                   <p className="text-[10px] uppercase font-bold text-foreground/60">Certified</p>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               {/* Text Description */}
-              <div className="space-y-4">
-                <p className="text-lg font-bold leading-relaxed">
+              <motion.div 
+                variants={scrollContainerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                className="space-y-4"
+              >
+                <motion.p variants={scrollRevealVariants} className="text-lg font-bold leading-relaxed">
                   I'm a Full Stack Developer and AI Engineer based in{" "}
                   <span className="underline decoration-wavy decoration-2 decoration-foreground">Kannur, Kerala, India</span>, specializing in intelligent, scalable software.
-                </p>
-                <p className="text-sm text-foreground/80 leading-relaxed font-semibold">
+                </motion.p>
+                <motion.p variants={scrollRevealVariants} className="text-sm text-foreground/80 leading-relaxed font-semibold">
                   With hands-on experience across the stack — from high-fidelity React interfaces to high-performance FastAPI backends — I specialize in deploying AI features into production systems. I build automated pipelines using tools like LangChain, Pinecone, and Azure/Vertex AI Services.
-                </p>
-                <p className="text-sm text-foreground/80 leading-relaxed font-semibold">
+                </motion.p>
+                <motion.p variants={scrollRevealVariants} className="text-sm text-foreground/80 leading-relaxed font-semibold">
                   I hold a B.Tech in Computer Science and an industry-recognized Azure AI Engineer Associate certification. I enjoy tackling challenging architectural problems where frontend speed meets intelligent backend logic.
-                </p>
+                </motion.p>
                 
-                <div className="flex gap-2.5 flex-wrap pt-4">
+                <motion.div variants={scrollRevealVariants} className="flex gap-2.5 flex-wrap pt-4">
                   {[
                     { icon: Rocket, label: "Fast Learner" },
                     { icon: Brain, label: "AI Focused" },
@@ -457,22 +648,42 @@ export default function App() {
                       {label}
                     </div>
                   ))}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             </div>
           </section>
 
           {/* ─── SKILLS SECTION ─── */}
           <section id="skills" className="scroll-mt-20">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3">
+            <motion.h2 
+              initial={{ x: -40, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ type: "spring", stiffness: 80, damping: 15 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3"
+            >
               <Code2 className="w-8 h-8 text-primary" /> Skills & Expertise
-            </h2>
+            </motion.h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <motion.div 
+              variants={scrollContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
               {SKILLS.map((category, i) => (
-                <div
+                <motion.div
                   key={i}
-                  className="bg-white border-2 border-border rounded-xl p-5 shadow-brutalist hover-brutalist cursor-default flex flex-col"
+                  custom={i}
+                  variants={skillCardVariants}
+                  whileHover={{ 
+                    y: -6, 
+                    x: -2,
+                    boxShadow: "6px 6px 0px 0px var(--border)",
+                    transition: { duration: 0.15 } 
+                  }}
+                  className="bg-white border-2 border-border rounded-xl p-5 shadow-brutalist cursor-default flex flex-col"
                 >
                   <div className="w-10 h-10 rounded-lg bg-background border-2 border-border flex items-center justify-center mb-4 text-foreground">
                     <category.icon className="w-5 h-5" />
@@ -488,22 +699,42 @@ export default function App() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </section>
 
           {/* ─── PROJECTS SECTION ─── */}
           <section id="projects" className="scroll-mt-20">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3">
+            <motion.h2 
+              initial={{ x: -40, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ type: "spring", stiffness: 80, damping: 15 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3"
+            >
               <Rocket className="w-8 h-8 text-primary" /> Projects
-            </h2>
+            </motion.h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div 
+              variants={scrollContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            >
               {PROJECTS.map((project, i) => (
-                <div
+                <motion.div
                   key={i}
-                  className="bg-white border-2 border-border rounded-xl overflow-hidden shadow-brutalist hover-brutalist flex flex-col h-full"
+                  custom={i}
+                  variants={projectCardVariants}
+                  whileHover={{ 
+                    y: -8, 
+                    x: -2,
+                    boxShadow: "8px 8px 0px 0px var(--border)",
+                    transition: { duration: 0.15 } 
+                  }}
+                  className="bg-white border-2 border-border rounded-xl overflow-hidden shadow-brutalist flex flex-col h-full"
                 >
                   {/* Card Header Illustration */}
                   <div className={`h-36 bg-gradient-to-br ${project.gradient} border-b-2 border-border flex items-center justify-center relative overflow-hidden`}>
@@ -534,27 +765,60 @@ export default function App() {
                       <ExternalLink className="w-3.5 h-3.5" /> View Project
                     </button>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </section>
+
+          {/* ─── ENGINEERING ECOSYSTEM SECTION ─── */}
+          <EngineeringEcosystem />
 
           {/* ─── EXPERIENCE SECTION ─── */}
           <section id="experience" className="scroll-mt-20">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3">
+            <motion.h2 
+              initial={{ x: -40, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ type: "spring", stiffness: 80, damping: 15 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3"
+            >
               <Briefcase className="w-8 h-8 text-primary" /> Experience & Education
-            </h2>
+            </motion.h2>
 
-            <div className="relative pl-6 sm:pl-10 border-l-2 border-border space-y-8 py-2">
+            <div ref={timelineRef} className="relative pl-6 sm:pl-10 space-y-8 py-2">
+              {/* Dynamic scroll-drawing line */}
+              <motion.div 
+                className="absolute left-0 top-0 bottom-0 w-[2px] bg-border origin-top z-0" 
+                style={{ scaleY: timelineScaleY }} 
+              />
+
               {EXPERIENCE.map((item, i) => (
-                <div key={i} className="relative">
+                <motion.div 
+                  key={i} 
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-80px" }}
+                  className="relative"
+                >
                   {/* Timeline icon dot */}
-                  <div className="absolute -left-[35px] sm:-left-[51px] top-1.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border-2 border-border flex items-center justify-center text-foreground shadow-brutalist-sm">
+                  <motion.div 
+                    variants={timelineNodeVariants}
+                    className="absolute -left-[35px] sm:-left-[51px] top-1.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border-2 border-border flex items-center justify-center text-foreground shadow-brutalist-sm z-10"
+                  >
                     <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </div>
+                  </motion.div>
 
                   {/* Card */}
-                  <div className="bg-white border-2 border-border rounded-xl p-5 shadow-brutalist hover-brutalist">
+                  <motion.div 
+                    variants={timelineCardVariants}
+                    whileHover={{ 
+                      y: -4, 
+                      x: -1,
+                      boxShadow: "4px 4px 0px 0px var(--border)",
+                      transition: { duration: 0.15 }
+                    }}
+                    className="bg-white border-2 border-border rounded-xl p-5 shadow-brutalist"
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                       <div>
                         <h3 className="text-sm font-black uppercase tracking-wide text-foreground">{item.title}</h3>
@@ -565,33 +829,59 @@ export default function App() {
                       </span>
                     </div>
                     <p className="text-xs text-foreground/80 leading-relaxed font-semibold">{item.description}</p>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               ))}
             </div>
           </section>
 
           {/* ─── CONTACT SECTION ─── */}
           <section id="contact" className="scroll-mt-20 pb-10">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3">
+            <motion.h2 
+              initial={{ x: -40, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ type: "spring", stiffness: 80, damping: 15 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tighter mb-10 border-b-2 border-border pb-3 flex items-center gap-3"
+            >
               <Mail className="w-8 h-8 text-primary" /> Contact Me
-            </h2>
+            </motion.h2>
 
             <div className="grid md:grid-cols-2 gap-10">
               {/* Contact Information */}
-              <div className="space-y-4">
+              <motion.div 
+                variants={scrollContainerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                className="space-y-4"
+              >
                 {[
                   { icon: Mail, label: "Email", value: "josephvarghese98128@gmail.com", href: "mailto:josephvarghese98128@gmail.com" },
                   { icon: Phone, label: "Phone", value: "+91 9656082409", href: "tel:+919656082409" },
                   { icon: Linkedin, label: "LinkedIn", value: "joseph-varghese-ai", href: "https://www.linkedin.com/in/joseph-varghese-ai/" },
                   { icon: MapPin, label: "Location", value: "Kannur, Kerala, India", href: "#" }
                 ].map(({ icon: Icon, label, value, href }) => (
-                  <a
+                  <motion.a
                     key={label}
                     href={href}
                     target={href.startsWith("http") ? "_blank" : undefined}
                     rel="noopener noreferrer"
-                    className="flex items-center gap-4 bg-white border-2 border-border p-4 rounded-xl shadow-brutalist hover-brutalist group"
+                    variants={{
+                      hidden: { x: -50, opacity: 0 },
+                      visible: { 
+                        x: 0, 
+                        opacity: 1,
+                        transition: { type: "spring", stiffness: 80, damping: 15 } 
+                      }
+                    }}
+                    whileHover={{ 
+                      y: -4, 
+                      x: -1,
+                      boxShadow: "4px 4px 0px 0px var(--border)",
+                      transition: { duration: 0.15 }
+                    }}
+                    className="flex items-center gap-4 bg-white border-2 border-border p-4 rounded-xl shadow-brutalist group"
                   >
                     <div className="w-10 h-10 rounded-lg bg-background border-2 border-border flex items-center justify-center shrink-0">
                       <Icon className="w-4 h-4 text-foreground" />
@@ -600,12 +890,19 @@ export default function App() {
                       <p className="text-[10px] font-bold uppercase text-foreground/60">{label}</p>
                       <p className="text-xs font-black uppercase tracking-wide group-hover:underline text-foreground leading-snug">{value}</p>
                     </div>
-                  </a>
+                  </motion.a>
                 ))}
-              </div>
+              </motion.div>
 
               {/* Contact Form */}
-              <div className="bg-white border-2 border-border rounded-xl p-6 shadow-brutalist">
+              <motion.div 
+                initial={{ rotateX: -20, y: 60, opacity: 0 }}
+                whileInView={{ rotateX: 0, y: 0, opacity: 1 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ type: "spring", stiffness: 70, damping: 15 }}
+                style={{ transformOrigin: "top", perspective: 1000 }}
+                className="bg-white border-2 border-border rounded-xl p-6 shadow-brutalist"
+              >
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -635,7 +932,7 @@ export default function App() {
                     <Send className="w-4 h-4" /> Send Message
                   </button>
                 </form>
-              </div>
+              </motion.div>
             </div>
           </section>
         </main>
@@ -643,12 +940,14 @@ export default function App() {
         {/* ─── RIGHT SIDEBAR (Desktop CTA & utilities, sticky) ─── */}
         <aside className="hidden lg:flex fixed top-0 right-0 w-[12%] h-screen flex-col justify-between items-end p-10 border-l-2 border-border bg-background z-40">
           {/* Top: CTA */}
-          <button
-            onClick={() => scrollToSection("contact")}
-            className="w-full bg-primary text-primary-foreground border-2 border-border font-black rounded-xl py-3 px-4 text-[10px] uppercase tracking-widest hover-brutalist active-brutalist shadow-brutalist cursor-pointer"
-          >
-            Hire Joseph
-          </button>
+          <Magnetic strength={0.25} range={45}>
+            <button
+              onClick={() => scrollToSection("contact")}
+              className="w-full bg-primary text-primary-foreground border-2 border-border font-black rounded-xl py-3 px-4 text-[10px] uppercase tracking-widest hover-brutalist active-brutalist shadow-brutalist cursor-pointer"
+            >
+              Hire Joseph
+            </button>
+          </Magnetic>
 
           {/* Middle: Utilities (Chat and Socials) */}
           <div className="flex flex-col gap-6 items-center my-auto">
@@ -727,7 +1026,7 @@ export default function App() {
           </p>
         </footer>
 
-      </div>
+      </motion.div>
 
       {/* ─── SLIDE-OUT CHAT DRAWER (Framer Motion) ─── */}
       <AnimatePresence>
@@ -807,6 +1106,9 @@ export default function App() {
         )}
       </AnimatePresence>
 
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
