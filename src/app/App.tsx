@@ -69,6 +69,18 @@ const PROJECTS = [
     tech: ["React", "FastAPI", "PostgreSQL", "Redis", "GCP", "Vertex AI"],
     gradient: "from-[#FF4E50] to-[#F9D423]",
     icon: Sparkles,
+    github: "https://github.com/Josephvarghes/RestoPulse",
+    live: "#",
+  },
+  {
+    title: "AI Support Agent",
+    description:
+      "Evaluate refund policies deterministically against live customer profiles. Combine dynamic LangGraph workflows, Llama 3.3 reasoning, and Deepgram voice synthesis with telemetry.",
+    tech: ["LangGraph", "Llama 3.3", "Deepgram", "Telemetry", "Next.js", "Python"],
+    gradient: "from-[#8E2DE2] to-[#4A00E0]",
+    icon: MessageCircle,
+    github: "https://github.com/Josephvarghes/ai-customer-support-agent",
+    live: "https://ai-customer-support-agent-rho.vercel.app/",
   },
   {
     title: "Edu Stack LMS",
@@ -77,6 +89,8 @@ const PROJECTS = [
     tech: ["Node.js", "Express.js", "MongoDB", "REST API"],
     gradient: "from-[#00c6ff] to-[#0072ff]",
     icon: Database,
+    github: "https://github.com/Josephvarghes/Edu-Stack-LMS",
+    live: "#",
   },
   {
     title: "AI Medical Chatbot",
@@ -85,6 +99,8 @@ const PROJECTS = [
     tech: ["Python", "FastAPI", "LangChain", "GPT", "Pinecone", "CI/CD"],
     gradient: "from-[#11998e] to-[#38ef7d]",
     icon: Brain,
+    github: "https://github.com/Josephvarghes/AI-Medical-Chatbot",
+    live: "#",
   },
 ];
 
@@ -207,8 +223,8 @@ const skillCardVariants = {
 const projectCardVariants = {
   hidden: (i: number) => ({
     opacity: 0,
-    x: i === 0 ? -80 : i === 2 ? 80 : 0,
-    y: i === 1 ? 80 : 0,
+    x: i % 2 === 0 ? -60 : 60,
+    y: 40,
   }),
   visible: {
     opacity: 1,
@@ -331,7 +347,9 @@ export default function App() {
     } else if (input.includes("experience") || input.includes("work") || input.includes("job")) {
       return "Joseph has worked at RestoPulse (Software Engineer), Wonder Creative Studio (Backend & AI Developer), Labmentix (AI/ML Intern), and Revature (AI/ML Trainee). Check the Experience section for full details!";
     } else if (input.includes("project")) {
-      return "Joseph's key projects include Resto Pulse (AI restaurant management on GCP), Edu Stack LMS (Node.js backend), and an AI Medical Chatbot using LangChain and Pinecone. Scroll to Projects to see more!";
+      return "Joseph's key projects include Resto Pulse (AI restaurant management on GCP), AI Support Agent (Refund Orchestrator), Edu Stack LMS (Node.js backend), and an AI Medical Chatbot. Scroll to Projects to see more!";
+    } else if (input.includes("refund") || input.includes("support") || input.includes("orchestrator") || input.includes("agent")) {
+      return "Joseph's AI Customer Support Agent (Refund Orchestrator) evaluates refund policies deterministically against customer profiles using LangGraph workflows, Llama 3.3, and Deepgram voice synthesis with telemetry. Scroll to Projects to see more!";
     } else if (input.includes("ecosystem") || input.includes("architecture") || input.includes("case study") || input.includes("scaling")) {
       return "Joseph's Engineering Ecosystem highlights core system architectures: a FastAPI Gateway (12ms latency), a semantic RAG Pipeline with Pinecone, a Redis alerts broker, and self-healing GCP clusters. Scroll to the Ecosystem section to check it out!";
     } else if (input.includes("contact") || input.includes("hire") || input.includes("email")) {
@@ -721,7 +739,7 @@ export default function App() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
               {PROJECTS.map((project, i) => (
                 <motion.div
@@ -761,9 +779,27 @@ export default function App() {
                         </span>
                       ))}
                     </div>
-                    <button className="w-full bg-primary text-primary-foreground border-2 border-border font-black text-xs uppercase py-2.5 rounded-lg hover-brutalist active-brutalist shadow-brutalist cursor-pointer flex items-center justify-center gap-1.5">
-                      <ExternalLink className="w-3.5 h-3.5" /> View Project
-                    </button>
+                    <div className="flex gap-2">
+                      <a
+                        href={project.live !== "#" ? project.live : project.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-primary text-primary-foreground border-2 border-border font-black text-xs uppercase py-2.5 rounded-lg hover-brutalist active-brutalist shadow-brutalist cursor-pointer flex items-center justify-center gap-1.5 text-center decoration-none"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> {project.live !== "#" ? "Live Demo" : "View Code"}
+                      </a>
+                      {project.github && (
+                        <a
+                          href={project.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-white text-foreground border-2 border-border font-black text-xs uppercase py-2.5 px-4 rounded-lg hover-brutalist active-brutalist shadow-brutalist cursor-pointer flex items-center justify-center gap-1.5"
+                          title="View Code on GitHub"
+                        >
+                          <Github className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
