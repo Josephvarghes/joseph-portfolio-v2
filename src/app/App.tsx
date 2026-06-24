@@ -599,8 +599,8 @@ export default function App() {
                   transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.3 }}
                   className="absolute -right-4 top-8 bg-card border-2 border-border rounded-xl px-4 py-2 shadow-brutalist-sm hover-brutalist"
                 >
-                  <p className="text-xl font-black text-primary leading-none">4+</p>
-                  <p className="text-[10px] uppercase font-bold text-foreground/60">Experiences</p>
+                  <p className="text-xl font-black text-primary leading-none">1.7</p>
+                  <p className="text-[10px] uppercase font-bold text-foreground/60">Years</p>
                 </motion.div>
                 <motion.div 
                   initial={{ scale: 0, rotate: 10 }}
